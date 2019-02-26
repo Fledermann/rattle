@@ -3,6 +3,13 @@
 from abc import ABC, abstractmethod
 
 
+def modify(func):
+    def wrapper(self, *args, **kwargs):
+        args = func(self, *args, **kwargs)
+        self.return_func(args, fname=func.__name__)
+    return wrapper
+
+
 class Widget(ABC):
     """ The Widget abstract base class. Never to be called directly.
 
@@ -19,17 +26,20 @@ class Widget(ABC):
 
     def __setattr__(self, key, value):
         """ Set the attribute and trigger callback when things are changed
-        which may require a new render. """
+        which may require a new render. Make a callback to flask/js if
+        it is not a private attribute and not a function (like when
+        assigning on_event methods).
+        """
         self.__dict__[key] = value
-        if key[0] != '_':
+        if key[0] != '_' and not callable(value):
             self._callback('attr', self._id, key, value)
             self._gen_code()
 
-    def __getattr__(self, key: str):
+    def __getattr__(self, key):
         """ Return the requested value. If it doesn't exist, pass it on to our
         callback since it is propably a function not defined here. """
         try:
-            return self.__dict__[key]
+            key = self.__dict__[key]
         except KeyError:
             self.__dict__['fname'] = key
             return self.return_func
@@ -45,8 +55,10 @@ class Widget(ABC):
     def _gen_code(self):
         return
 
-    def return_func(self, *args, **kwargs):
+    def return_func(self, *args, fname=''):
         """ Pass the parameters to our callback and return nothing. """
+        if fname:
+            self.fname = fname
         self.__dict__[f'_{self.fname}'] = args
         self._callback('func', self._id, self.fname, args)
 
@@ -59,6 +71,17 @@ class Table(Widget):
     def _gen_code(self):
         self._code = f'<table id="{self._id}" class="widget"></table>'
 
+    @modify
+    def append(self, *row, category='default'):
+        """ Takes any number of string args and put them together as a
+        HTML table row.
+        """
+        html_row = '</td><td>'.join(row)
+        html_row = f'<tr><td>{html_row}</td></tr>'
+        if category == 'header':
+            html_row = html_row.replace('td>', 'th>')
+        return html_row
+
 
 class Link(Widget):
 
@@ -68,7 +91,7 @@ class Link(Widget):
 
     def _gen_code(self):
         html = self._html[0]
-        self._code = f'<a id="{self._id}" class="widget-cl" href="#">{html}</a>'
+        self._code = f'<a id="{self._id}" class="click" href="#">{html}</a>'
 
 
 class Input(Widget):
@@ -77,7 +100,7 @@ class Input(Widget):
         self._type = 'input'
 
     def _gen_code(self):
-        self._code = f'<input type="text" id="{self._id}" class="widget-ch-in">'
+        self._code = f'<input type="text" id="{self._id}" class="change input">'
 
 
 class Label(Widget):
@@ -96,4 +119,4 @@ class Select(Widget):
         self._type = 'select'
 
     def _gen_code(self):
-        self._code = f'<select id="{self._id}" class="widget-ch-cl"></select>'
+        self._code = f'<select id="{self._id}" class="change click"></select>'
