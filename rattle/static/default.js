@@ -1,23 +1,18 @@
-$(document).on('click', '.widget-cl', (function(event) {
+$(document).on('change', '.change', (function(event) {
     postit(this, event);
 }));
 
-$(document).on('change input', '.widget-ch-in', (function(event) {
+$(document).on('click', '.click', (function(event) {
     postit(this, event);
 }));
 
-$(document).on('change click', '.widget-ch-cl', (function(event) {
+$(document).on('input', '.input', (function(event) {
     postit(this, event);
 }));
 
 $( document ).ready(function() {
     postit(null, null);
 });
-
-/*$(window).bind('beforeunload', function(e) { 
-    e.preventDefault();
-    return "Unloading this page may lose data. What do you want to do..."
-});*/
 
 function get_props(obj) {
     return {
