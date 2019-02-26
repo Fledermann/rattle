@@ -16,8 +16,10 @@ class App:
         self.title = title
         self.html = ''
         self.html_src = template
-        self.widgets = dict()
         self.queue = list()
+        self.widgets = dict()
+        self.widget_objs = {'input': Input, 'label': Label, 'link': Link,
+                            'select': Select, 'table': Table}
         self.make_widgets()
         self.setup = setup
 
@@ -25,19 +27,16 @@ class App:
         return self.widgets[name]
 
     def callback_widget(self, type_, id_, key, value):
-        if not callable(value):
-            self.queue.append(dict(type_=type_, id_=id_, key=key, value=value))
+        self.queue.append(dict(type_=type_, id_=id_, key=key, value=value))
 
     def make_widgets(self):
-        widget_objs = {'input': Input, 'label': Label, 'link': Link,
-                       'select': Select, 'table': Table}
         with open(self.html_src, 'r') as f:
             html = f.read()
         pattern = re.compile(r'{{ (.*?) }}')
         widgets = re.findall(pattern, html)
         for w in widgets:
             type_, id_ = w.split('#')
-            new_widget = widget_objs[type_](id_, self.callback_widget)
+            new_widget = self.widget_objs[type_](id_, self.callback_widget)
             self.widgets[id_] = new_widget
 
     def make_html_response(self):
@@ -49,9 +48,7 @@ class App:
         self.html = html
 
     def new(self, id_, type_):
-        widget_objs = {'input': Input, 'label': Label, 'link': Link,
-                       'select': Select, 'table': Table}
-        new_widget = widget_objs[type_](id_, self.callback_widget)
+        new_widget = self.widget_objs[type_](id_, self.callback_widget)
         self.widgets[id_] = new_widget
         return new_widget
 
@@ -60,7 +57,7 @@ class App:
 
     def http_response(self):
         if not request.form:
-            # The very first request or after refresh
+            # The very first request or after refresh: build new.
             self.setup(self)
             self.make_html_response()
             return render_template('default.html', title=self.title,
@@ -69,13 +66,15 @@ class App:
             event = request.form['event']
             if event != 'None':
                 # A 'None' event is send when it doesn't come from a
-                # widget (like onload or timers)
+                # widget (like onload or timers).
                 id_ = request.form['id_']
                 props = json.loads(request.form['props'])
                 widget = self.widgets[id_]
                 for prop, value in props.items():
+                    # Set all attributes as provided.
                     setattr(widget, prop, value)
                 try:
+                    # Call a bound function if it exists.
                     getattr(widget, f'on_{event}')(id_)
                 except AttributeError:
                     pass
