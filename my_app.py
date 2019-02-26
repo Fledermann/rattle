@@ -31,14 +31,20 @@ def link_clicked(id_):
 def file_browser_build(my_app, directory):
     if not pathlib.Path(directory).is_dir():
         return None
+    # Erase the current html and add header.
     my_app('dir_curr').innerText = directory
     my_app('files').html('')
-    my_app('files').append('<th>Filename</th><th>Size (bytes)</th>')
+    my_app('files').append('File Name', 'Size (bytes)', category='header')
+
+    # Add a link to parent directory.
     link = my_app.new(f'link_parent', 'link')
     link.html('..')
     link._value = str(pathlib.Path(directory).parent.resolve())
     link.on_click = file_browser_click
-    my_app('files').append(f'<tr><td>{link}</td><td>{4096}</td></tr>')
+
+    my_app('files').append(repr(link), '4096')
+
+    # Walk through dir and create links.
     for file_ in sorted(pathlib.Path(directory).iterdir())[:6]:
         size = os.stat(file_).st_size
         id_ = str(file_).replace('/', '')
@@ -46,7 +52,7 @@ def file_browser_build(my_app, directory):
         link.html(file_.parts[-1])
         link._value = str(pathlib.Path(file_).resolve())
         link.on_click = file_browser_click
-        my_app('files').append(f'<tr><td>{link}</td><td>{size}</td></tr>')
+        my_app('files').append(repr(link), str(size))
 
 
 def file_browser_click(id_):
