@@ -7,7 +7,7 @@ from rattle.rattle import App
 
 class MyApp(App):
 
-    def __setup__(self):
+    def _setup(self):
         self('result').innerText = 'Please enter a number.'
         self('dropdown').append(['en', 'English'])
         self('dropdown').append(['de', 'German'])

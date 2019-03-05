@@ -30,7 +30,7 @@ class App(ABC):
         return self.widgets[name]
 
     @abstractmethod
-    def __setup__(self):
+    def _setup(self):
         return
 
     def callback_widget(self, type_, id_, key, value):
