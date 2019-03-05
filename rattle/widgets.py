@@ -41,10 +41,15 @@ class Widget(ABC):
         try:
             key = self.__dict__[key]
         except KeyError:
+            if key.startswith('on_'):
+                print(f'Info: Function {key} available but not defined for',
+                      f'{self._type}')
+                return None
             self.__dict__['fname'] = key
             return self.return_func
 
     def __repr__(self):
+        self._gen_code()
         return self._code
 
     @abstractmethod
@@ -59,7 +64,7 @@ class Widget(ABC):
         """ Pass the parameters to our callback and return nothing. """
         if fname:
             self.fname = fname
-        self.__dict__[f'_{self.fname}'] = args
+        setattr(self, f'_{self.fname}', args)
         self._callback('func', self._id, self.fname, args)
 
 
@@ -72,8 +77,8 @@ class Table(Widget):
         self._code = f'<table id="{self._id}" class="widget"></table>'
 
     @modify
-    def append(self, *row, category='default'):
-        """ Takes any number of string args and put them together as a
+    def append(self, row, category='default'):
+        """ Take any number of string args and put them together as a
         HTML table row.
         """
         html_row = '</td><td>'.join(row)
@@ -100,7 +105,7 @@ class Input(Widget):
         self._type = 'input'
 
     def _gen_code(self):
-        self._code = f'<input type="text" id="{self._id}" class="change input">'
+        self._code = f'<input type="text" id="{self._id}" class="input change">'
 
 
 class Label(Widget):
@@ -119,4 +124,8 @@ class Select(Widget):
         self._type = 'select'
 
     def _gen_code(self):
-        self._code = f'<select id="{self._id}" class="change click"></select>'
+        self._code = f'<select id="{self._id}" class="change"></select>'
+
+    @modify
+    def append(self, args, **kwargs):
+        return f'<option value="{args[0]}">{args[1]}</option>'
