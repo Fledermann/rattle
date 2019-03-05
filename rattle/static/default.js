@@ -1,4 +1,5 @@
 $(document).on('change', '.change', (function(event) {
+    console.log(this, event)
     postit(this, event);
 }));
 
@@ -35,8 +36,6 @@ function postit(this_, event) {
                 $('#'+json_[k].id_).prop(json_[k].key, json_[k].value);
             }
             else {
-                console.log('Received function call:');
-                console.log(json_[k].id_);
                 $('#'+json_[k].id_)[json_[k].key](json_[k].value);
             }
         }
