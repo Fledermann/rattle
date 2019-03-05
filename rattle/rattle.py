@@ -2,32 +2,55 @@
 
 import re
 import json
+from abc import ABC, abstractmethod
+from collections import defaultdict
 from flask import render_template, request
 from .widgets import Input, Label, Link, Select, Table
 from .utils import FlaskAppWrapper
 
 
-class App:
+class App(ABC):
 
-    def __init__(self, title, template, setup):
+    events = defaultdict(lambda: defaultdict(list))
+
+    def __init__(self, title, html=None, css=None):
         self.app = FlaskAppWrapper(__name__)
         self.app.add_endpoint('/', 'http_response', handler=self.http_response,
                               methods=['GET', 'POST'])
         self.title = title
         self.html = ''
-        self.html_src = template
+        self.html_src = html
         self.queue = list()
         self.widgets = dict()
         self.widget_objs = {'input': Input, 'label': Label, 'link': Link,
                             'select': Select, 'table': Table}
         self.make_widgets()
-        self.setup = setup
 
     def __call__(self, name):
         return self.widgets[name]
 
+    @abstractmethod
+    def __setup__(self):
+        return
+
     def callback_widget(self, type_, id_, key, value):
         self.queue.append(dict(type_=type_, id_=id_, key=key, value=value))
+
+    def event(_id, action):
+        def wrapper(func):
+            App.events[_id][action].append(func.__name__)
+
+            def wrapped(self):
+                func(self)
+            return wrapped
+        return wrapper
+
+    def on(self, event, _id):
+        try:
+            evt = App.events[_id][event][0]
+        except IndexError:
+            return None
+        return getattr(self, evt)
 
     def make_widgets(self):
         with open(self.html_src, 'r') as f:
@@ -58,7 +81,7 @@ class App:
     def http_response(self):
         if not request.form:
             # The very first request or after refresh: build new.
-            self.setup(self)
+            self.setup()
             self.make_html_response()
             return render_template('default.html', title=self.title,
                                    body=self.html)
@@ -75,8 +98,8 @@ class App:
                     setattr(widget, prop, value)
                 try:
                     # Call a bound function if it exists.
-                    getattr(widget, f'on_{event}')(id_)
-                except AttributeError:
+                    self.on(event, id_)()
+                except (AttributeError, TypeError):
                     pass
             json_response = json.dumps(self.queue)
             self.queue = list()
