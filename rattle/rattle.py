@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 
-import re
 import json
+import logging
+import re
+
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from flask import render_template, request
-from .widgets import Input, Label, Link, Select, Table
+
 from .utils import FlaskAppWrapper
+from .widgets import Input, Label, Link, Select, Table
+
+logger = logging.getLogger('rattle.rattle')
 
 
 class App(ABC):
@@ -49,6 +54,7 @@ class App(ABC):
         try:
             evt = App.events[_id][event][0]
         except IndexError:
+            logger.info(f'Event on_{event} for {_id} called but not defined.')
             return None
         return getattr(self, evt)
 
@@ -81,7 +87,8 @@ class App(ABC):
     def http_response(self):
         if not request.form:
             # The very first request or after refresh: build new.
-            self.setup()
+            logger.debug('Received empty request, building inital page.')
+            self._setup()
             self.make_html_response()
             return render_template('default.html', title=self.title,
                                    body=self.html)
@@ -102,5 +109,7 @@ class App(ABC):
                 except (AttributeError, TypeError):
                     pass
             json_response = json.dumps(self.queue)
+            logger.debug('Generated json response: ')
+            logger.debug(str(json_response))
             self.queue = list()
             return json_response
