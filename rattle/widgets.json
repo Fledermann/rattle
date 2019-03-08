@@ -1,0 +1,28 @@
+[
+    {
+        "_name": "a",
+        "events": "click",
+        "extra_attributes": {
+            "href": "#"
+        },
+        "single": false
+    },
+    {
+        "_name": "span",
+        "events": "",
+        "extra_attributes": {},
+        "single": false
+    },
+    {
+        "_name": "input",
+        "events": "input",
+        "extra_attributes": {},
+        "single": true
+    },
+    {
+        "_name": "select",
+        "events": "change",
+        "extra_attributes": {},
+        "single": false
+    }
+]

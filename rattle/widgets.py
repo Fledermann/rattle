@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
+import json
 import logging
-from abc import ABC, abstractmethod
 
 logger = logging.getLogger('rattle.widgets')
 
@@ -13,7 +13,17 @@ def modify(func):
     return wrapper
 
 
-class Widget(ABC):
+def get_widget(name, widget_data):
+    for elem in widget_data:
+        if elem['_name'] == name:
+            return elem
+
+
+with open('rattle/widgets.json', 'r') as f:
+    widget_data = json.load(f)
+
+
+class Widget:
     """ The Widget abstract base class. Never to be called directly.
 
     :param str _id: The widgets' id or name.
@@ -21,10 +31,10 @@ class Widget(ABC):
                               attributes when certain attributes are changed.
     """
 
-    def __init__(self, _id, callback):
+    def __init__(self, _id, _type, callback):
         self._id = _id
+        self._type = _type
         self._callback = callback
-        self._init_local()
         self._gen_code()
 
     def __setattr__(self, key, value):
@@ -42,7 +52,7 @@ class Widget(ABC):
         """ Return the requested value. If it doesn't exist, pass it on to our
         callback since it is propably a function not defined here. """
         try:
-            key = self.__dict__[key]
+            return self.__dict__[key]
         except KeyError:
             if key.startswith('on_'):
                 logger.info(f'Info: Function {key} available but not defined ',
@@ -55,81 +65,49 @@ class Widget(ABC):
         self._gen_code()
         return self._code
 
-    @abstractmethod
-    def _init_local(self):
-        return
-
-    @abstractmethod
     def _gen_code(self):
-        return
+        """ Build the html source for the element. """
+        properties = get_widget(self._type, widget_data)
+
+        if not properties:
+            logger.error(f'Widget type {self._type} NA')
+            self._code = ''
+            return
+
+        attrib = [f'{key}="{value}"' for key, value in
+                  properties['extra_attributes'].items()]
+
+        self._code = (f'<{self._type} '  # Opening Tag
+                      f'id="{self._id}" '  # DOM id
+                      f'class="{properties["events"]}" '  # class
+                      f'{" ".join(attrib)}>')  # additional attributes
+
+        if not properties.get('single'):
+            self._code += f'</{self._type}>'  # Closing tag
 
     def return_func(self, *args, fname=''):
         """ Pass the parameters to our callback and return nothing. """
         if fname:
             self.fname = fname
         setattr(self, f'_{self.fname}', args)
+        try:
+            args = globals()[f'{self._type}_{self.fname}'](*args)
+        except KeyError:
+            pass
         self._callback('func', self._id, self.fname, args)
 
 
-class Table(Widget):
-
-    def _init_local(self):
-        self._type = 'table'
-
-    def _gen_code(self):
-        self._code = f'<table id="{self._id}" class="widget"></table>'
-
-    @modify
-    def append(self, row, category='default'):
-        """ Take any number of string args and put them together as a
-        HTML table row.
-        """
-        html_row = '</td><td>'.join(row)
-        html_row = f'<tr><td>{html_row}</td></tr>'
-        if category == 'header':
-            html_row = html_row.replace('td>', 'th>')
-        return html_row
+def select_append(args):
+    return f'<option value="{args[0]}">{args[1]}</option>'
 
 
-class Link(Widget):
+def table_append(row, category='default'):
+    """ Take any number of string args and put them together as a
+    HTML table row.
+    """
+    html_row = '</td><td>'.join(row)
+    html_row = f'<tr><td>{html_row}</td></tr>'
+    if category == 'header':
+        html_row = html_row.replace('td>', 'th>')
+    return html_row
 
-    def _init_local(self):
-        self._type = 'link'
-        self._html = tuple([''])
-
-    def _gen_code(self):
-        html = self._html[0]
-        self._code = f'<a id="{self._id}" class="click" href="#">{html}</a>'
-
-
-class Input(Widget):
-
-    def _init_local(self):
-        self._type = 'input'
-
-    def _gen_code(self):
-        self._code = (f'<input type="text" id="{self._id}"'
-                      f'class="input change">')
-
-
-class Label(Widget):
-
-    def _init_local(self):
-        self._type = 'label'
-        self._innerText = ''
-
-    def _gen_code(self):
-        self._code = f'<p id="{self._id}" class="widget">{self._innerText}</p>'
-
-
-class Select(Widget):
-
-    def _init_local(self):
-        self._type = 'select'
-
-    def _gen_code(self):
-        self._code = f'<select id="{self._id}" class="change"></select>'
-
-    @modify
-    def append(self, args, **kwargs):
-        return f'<option value="{args[0]}">{args[1]}</option>'
