@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
+import logging
 from abc import ABC, abstractmethod
+
+logger = logging.getLogger('rattle.widgets')
 
 
 def modify(func):
@@ -42,8 +45,8 @@ class Widget(ABC):
             key = self.__dict__[key]
         except KeyError:
             if key.startswith('on_'):
-                print(f'Info: Function {key} available but not defined for',
-                      f'{self._type}')
+                logger.info(f'Info: Function {key} available but not defined ',
+                            f'for {self._type}')
                 return None
             self.__dict__['fname'] = key
             return self.return_func
@@ -105,7 +108,8 @@ class Input(Widget):
         self._type = 'input'
 
     def _gen_code(self):
-        self._code = f'<input type="text" id="{self._id}" class="input change">'
+        self._code = (f'<input type="text" id="{self._id}"'
+                      f'class="input change">')
 
 
 class Label(Widget):
