@@ -9,7 +9,7 @@ from collections import defaultdict
 from flask import render_template, request
 
 from .utils import FlaskAppWrapper
-from .widgets import Input, Label, Link, Select, Table
+from .widgets import Widget
 
 logger = logging.getLogger('rattle.rattle')
 
@@ -27,8 +27,6 @@ class App(ABC):
         self.html_src = html
         self.queue = list()
         self.widgets = dict()
-        self.widget_objs = {'input': Input, 'label': Label, 'link': Link,
-                            'select': Select, 'table': Table}
         self.make_widgets()
 
     def __call__(self, name):
@@ -65,7 +63,7 @@ class App(ABC):
         widgets = re.findall(pattern, html)
         for w in widgets:
             type_, id_ = w.split('#')
-            new_widget = self.widget_objs[type_](id_, self.callback_widget)
+            new_widget = Widget(id_, type_, self.callback_widget)
             self.widgets[id_] = new_widget
 
     def make_html_response(self):
