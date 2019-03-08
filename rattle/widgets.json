@@ -20,9 +20,29 @@
         "single": true
     },
     {
+        "_name": "table",
+        "events": "",
+        "extra_attributes": {},
+        "single": false
+    },
+    {
         "_name": "select",
         "events": "change",
         "extra_attributes": {},
+        "single": false
+    },
+    {
+        "_name": "ul",
+        "events": "",
+        "extra_attributes": {},
+        "single": false
+    },
+    {
+        "_name": "progress",
+        "events": "",
+        "extra_attributes": {
+            "max": "100"
+        },
         "single": false
     }
 ]

@@ -12,6 +12,13 @@ class MyApp(App):
         self('dropdown').append(['en', 'English'])
         self('dropdown').append(['de', 'German'])
         self('sample_link').html('This is a sample link')
+        self('files').append(['ID', 'Name', 'Phone'], category='header')
+        self('files').append(['1', 'John', '555-34124'])
+        self('files').append(['2', 'Jane', '555-09812'])
+        self('loading').value = '20'
+        self('gauge').html('Click me to load.')
+        self('list1').append('ul Item 1')
+        self('list1').append('ul Item two')
 
     @App.event('number_input', 'input')
     def square(self):
@@ -33,6 +40,12 @@ class MyApp(App):
         value = self('dropdown').value
         output = f'The selected language is: "{value}"'
         self('selected').innerText = output
+
+    @App.event('gauge', 'click')
+    def fill_bar(self):
+        for i in range(20, 102, 1):
+            self('loading').value = str(i)
+            time.sleep(0.1)
 
 
 html = 'my_app.html'
