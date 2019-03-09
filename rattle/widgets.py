@@ -1,26 +1,8 @@
 #!/usr/bin/env python3
 
-import json
 import logging
 
 logger = logging.getLogger('rattle.widgets')
-
-
-def modify(func):
-    def wrapper(self, *args, **kwargs):
-        args = func(self, *args, **kwargs)
-        self.return_func(args, fname=func.__name__)
-    return wrapper
-
-
-def get_widget(name, widget_data):
-    for elem in widget_data:
-        if elem['_name'] == name:
-            return elem
-
-
-with open('rattle/widgets.json', 'r') as f:
-    widget_data = json.load(f)
 
 
 class Widget:
@@ -31,9 +13,10 @@ class Widget:
                               attributes when certain attributes are changed.
     """
 
-    def __init__(self, _id, _type, callback):
+    def __init__(self, _id, data, callback):
         self._id = _id
-        self._type = _type
+        self._data = data
+        self._type = data['_name']
         self._callback = callback
         self._gen_code()
 
@@ -67,7 +50,7 @@ class Widget:
 
     def _gen_code(self):
         """ Build the html source for the element. """
-        properties = get_widget(self._type, widget_data)
+        properties = self._data
 
         if not properties:
             logger.error(f'Widget type {self._type} NA')
