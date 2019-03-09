@@ -1,3 +1,5 @@
+var interval;
+
 $(document).on('change', '.change', (function(event) {
     console.log(this, event)
     postit(this, event);
@@ -13,6 +15,7 @@ $(document).on('input', '.input', (function(event) {
 
 $( document ).ready(function() {
     postit(null, null);
+    interval = setInterval("postit(null, null)", 250);
 });
 
 function get_props(obj) {

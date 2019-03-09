@@ -85,20 +85,22 @@ class Widget:
         if not properties.get('single'):
             self._code += f'</{self._type}>'  # Closing tag
 
-    def return_func(self, *args, fname=''):
+    def return_func(self, *args, fname='', **kwargs):
         """ Pass the parameters to our callback and return nothing. """
         if fname:
             self.fname = fname
         setattr(self, f'_{self.fname}', args)
         try:
-            args = globals()[f'{self._type}_{self.fname}'](*args)
+            # Process args if function is defined (like table_append())
+            args = globals()[f'{self._type}_{self.fname}'](*args, **kwargs)
         except KeyError:
             pass
         self._callback('func', self._id, self.fname, args)
 
 
 def select_append(args):
-    return f'<option value="{args[0]}">{args[1]}</option>'
+    value, name = args
+    return f'<option value="{value}">{name}</option>'
 
 
 def table_append(row, category='default'):
@@ -111,3 +113,6 @@ def table_append(row, category='default'):
         html_row = html_row.replace('td>', 'th>')
     return html_row
 
+
+def ul_append(name):
+    return f'<li>{name}</li>'
