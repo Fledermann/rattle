@@ -2,12 +2,12 @@
 
 import json
 import logging
-import re
 
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from flask import render_template, request
 
+from .parser import html_parser, widget_parser
 from .utils import FlaskAppWrapper
 from .widgets import Widget
 
@@ -23,8 +23,8 @@ class App(ABC):
         self.app.add_endpoint('/', 'http_response', handler=self.http_response,
                               methods=['GET', 'POST'])
         self.title = title
-        self.html = ''
-        self.html_src = html
+        self.body_src = ''
+        self.html_file = html
         self.queue = list()
         self.widgets = dict()
         self.make_widgets()
@@ -57,22 +57,19 @@ class App(ABC):
         return getattr(self, evt)
 
     def make_widgets(self):
-        with open(self.html_src, 'r') as f:
-            html = f.read()
-        pattern = re.compile(r'{{ (.*?) }}')
-        widgets = re.findall(pattern, html)
+        widget_data = widget_parser('rattle/widgets.json')
+        widgets = html_parser(self.html_file, widget_data)
         for w in widgets:
-            type_, id_ = w.split('#')
-            new_widget = Widget(id_, type_, self.callback_widget)
-            self.widgets[id_] = new_widget
+            new_widget = Widget(w[1], widget_data[w[0]], self.callback_widget)
+            self.widgets[w[1]] = new_widget
 
     def make_html_response(self):
-        with open(self.html_src, 'r') as f:
+        with open(self.html_file, 'r') as f:
             html = f.read()
         for w in self.widgets.values():
             tag = f'{{{{ {w._type}#{w._id} }}}}'
             html = html.replace(tag, str(w))
-        self.html = html
+        self.body_src = html
 
     def new(self, id_, type_):
         new_widget = self.widget_objs[type_](id_, self.callback_widget)
@@ -89,7 +86,7 @@ class App(ABC):
             self._setup()
             self.make_html_response()
             return render_template('default.html', title=self.title,
-                                   body=self.html)
+                                   body=self.body_src)
         else:
             event = request.form['event']
             if event != 'None':
@@ -107,7 +104,5 @@ class App(ABC):
                 except (AttributeError, TypeError):
                     pass
             json_response = json.dumps(self.queue)
-            logger.debug('Generated json response: ')
-            logger.debug(str(json_response))
             self.queue = list()
             return json_response
