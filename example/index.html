@@ -1,33 +1,23 @@
 <div class="wrapper">
-
-  <header class="header">Widget examples</header>
-
-  <div class="panel">
+  <header class="header">Settings</header>
+  <aside class="sidebar">
+    {{ ul#menu }}
+  </aside>
+  <article class="content">
     {{ input#number_input }} <br>
     {{ span#result }}
-  </div>
-  
-  <div class="panel">
+
     {{ select#dropdown }} <br>
     {{ span#selected }}
-  </div>
-  
-  <div class="panel">
+
     {{ a#sample_link }} <br>
     {{ span#sample_link_label }}
-  </div>
-    
-  <div class="panel">
-    {{ table#files }}
-  </div>
 
-  <div class="panel">
+    {{ table#files }}
+
     {{ progress#loading }} <br>
     {{ a#gauge }}
-  </div>
 
-  <div class="panel">
-    {{ ul#list1 }}
-  </div>
-  
+  </article>
+  <footer class="footer">Footer</footer>
 </div>

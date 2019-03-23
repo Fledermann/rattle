@@ -41,8 +41,10 @@ class Widget:
                 logger.info(f'Info: Function {key} available but not defined ',
                             f'for {self._type}')
                 return None
-            self.__dict__['fname'] = key
-            return self.return_func
+            if not key.startswith('_'):
+                self.__dict__['fname'] = key
+                return self.return_func
+        raise AttributeError
 
     def __repr__(self):
         self._gen_code()
@@ -51,7 +53,6 @@ class Widget:
     def _gen_code(self):
         """ Build the html source for the element. """
         properties = self._data
-
         if not properties:
             logger.error(f'Widget type {self._type} NA')
             self._code = ''
@@ -65,6 +66,10 @@ class Widget:
                       f'class="{properties["events"]}" '  # class
                       f'{" ".join(attrib)}>')  # additional attributes
 
+        try:
+            self._code += self._html[0]
+        except AttributeError:
+            pass
         if not properties.get('single'):
             self._code += f'</{self._type}>'  # Closing tag
 
@@ -73,6 +78,8 @@ class Widget:
         if fname:
             self.fname = fname
         setattr(self, f'_{self.fname}', args)
+        if self.fname == 'attr':  # update  _data to overwrite attrs
+            self._data['extra_attributes'][args[0]] = args[1]
         try:
             # Process args if function is defined (like table_append())
             args = globals()[f'{self._type}_{self.fname}'](*args, **kwargs)

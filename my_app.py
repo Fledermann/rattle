@@ -17,9 +17,17 @@ class MyApp(App):
         self('files').append(['2', 'Jane', '555-09812'])
         self('loading').value = '20'
         self('gauge').html('Click me to load.')
-        self('list1').append('ul Item 1')
-        self('list1').append('ul Item two')
 
+        link_index = self.new('link_index', 'a')
+        link_index.html('Main Settings')
+        link_index.attr('href', 'index')
+        self('menu').append(link_index)
+
+        link_advanced = self.new('link_advanced', 'a')
+        link_advanced.html('Advanced Settings')
+        link_advanced.attr('href', 'advanced')
+        self('menu').append(link_advanced)
+        
     @App.event('number_input', 'input')
     def square(self):
         value = self('number_input').value
@@ -48,7 +56,6 @@ class MyApp(App):
             time.sleep(0.1)
 
 
-html = 'my_app.html'
-css = 'static/default.css'
-myapp = MyApp('my_app: Testing widgets', html=html, css=css)
+src = 'example/'
+myapp = MyApp('my_app: Testing widgets', src=src)
 myapp.run()
